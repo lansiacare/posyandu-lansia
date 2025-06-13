@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 session_start();
 require_once 'config/database.php';
 
@@ -87,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Google simulation
+/* // Google simulation
 if (isset($_GET['google'])) {
     $user_type = $_GET['type'] ?? 'user';
     if ($user_type === 'kader') {
@@ -106,7 +109,7 @@ if (isset($_GET['google'])) {
         header('Location: index.php');
     }
     exit();
-}
+} */
 ?>
 
 <!DOCTYPE html>
