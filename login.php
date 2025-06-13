@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
+/*
 // Handle Google login (simulation)
 if (isset($_GET['google'])) {
     $user_type = $_GET['type'] ?? 'user';
@@ -89,7 +89,7 @@ if (isset($_GET['google'])) {
     exit();
 }
 ?>
-
+*/
 <!DOCTYPE html>
 <html lang="id">
 <head>
