@@ -26,7 +26,7 @@ try {
         [
             'title' => 'Tips Menjaga Kesehatan Jantung di Usia Lanjut',
             'source' => 'Halodoc',
-            'url' => 'https://halodoc.com',
+            'url' => 'https://www.halodoc.com/artikel/4-pola-hidup-sehat-agar-jantung-tetap-sehat-di-masa-lansia?srsltid=AfmBOopbZnxmUj6I4h3ubVWQmaz00UCp5kqFW6YFad5AZJKfy3TnffL2',
             'image_url' => 'https://via.placeholder.com/300x200/EF4444/FFFFFF?text=Kesehatan+Jantung'
         ],
         [
@@ -104,7 +104,8 @@ if ($is_logged_in && $user_role === 'kader') {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-4">
-                    <img src="gambar/logo.png" alt="Logo Lansia Care" class="w-12 h-12 rounded-lg object-cover" />                    
+                    <img src="gambar/logo.png" alt="Logo Lansia Care" class="w-12 h-12 rounded-lg object-cover" />
+                    </div>
                     <div>
                         <h1 class="text-xl font-bold text-gray-900">Lansia Care</h1>
                         <p class="text-sm text-gray-600">Kecamatan Depok, Sleman, DIY</p>
