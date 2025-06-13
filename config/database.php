@@ -3,15 +3,32 @@
 
 // Database credentials
 $host = 'localhost';
-$dbname = 'posyandu_lansia';
+$dbname = 'posyandulansia';
 $username = 'root';  // Ganti dengan username database Anda
 $password = '';      // Ganti dengan password database Anda
+$charset = 'utf8mb4';
 
 // Untuk hosting, ganti dengan kredensial hosting Anda:
 // $host = 'localhost';
 // $dbname = 'your_hosting_database_name';
 // $username = 'your_hosting_username';
 // $password = 'your_hosting_password';
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Sangat penting untuk debugging!
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+    // echo "Koneksi database berhasil!"; // Anda bisa mengaktifkan ini sementara untuk tes
+} catch (\PDOException $e) {
+    // Ini akan menampilkan error jika koneksi gagal
+    // In production, you would log this error and show a generic message
+    throw new \PDOException($e->getMessage(), (int)$e->getCode());
+}
 
 try {
     // Create PDO connection
