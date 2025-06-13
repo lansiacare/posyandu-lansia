@@ -3,7 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 session_start();
-require_once 'config/database.php';
+require_once 'config/database.php'; // Pastikan path ini benar!
 
 $error = '';
 $success = '';
@@ -20,6 +20,9 @@ try {
     $stmt = $pdo->query("SELECT id, name FROM locations WHERE status = 'active'");
     $locations = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
+    // Ini akan terpicu jika tabel 'locations' tidak ada atau ada masalah koneksi.
+    // Jika Anda melihat pesan error dari sini, itu bagus.
+    error_log("Error fetching locations: " . $e->getMessage());
     // Fallback list
     $locations = [
         ['id' => 1, 'name' => 'Posyandu Condongcatur'],
@@ -37,6 +40,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_type = $_POST['user_type'] ?? 'user';
     $location_id = $_POST['location_id'] ?? null;
 
+    // --- DEBUGGING: Tampilkan input dari form ---
+    echo "<pre><h3>DEBUGGING INPUT FORM:</h3>";
+    echo "Name: " . htmlspecialchars($name) . "\n";
+    echo "Email: " . htmlspecialchars($email) . "\n";
+    echo "Password (RAW): " . htmlspecialchars($password) . "\n"; // HATI-HATI di produksi!
+    echo "Confirm Password (RAW): " . htmlspecialchars($confirm_password) . "\n";
+    echo "User Type: " . htmlspecialchars($user_type) . "\n";
+    echo "Location ID: " . ($location_id === null ? 'NULL' : htmlspecialchars($location_id)) . "\n";
+    echo "</pre>";
+    // --- END DEBUGGING ---
+
     if (empty($name) || empty($email) || empty($password) || empty($confirm_password)) {
         $error = 'Silakan isi semua field yang diperlukan.';
     } elseif ($password !== $confirm_password) {
@@ -45,10 +59,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Silakan pilih lokasi posyandu untuk akun kader.';
     } else {
         try {
-            // Check email
+            // --- DEBUGGING: Cek email yang ada ---
+            echo "<pre><h3>DEBUGGING CHECK EXISTING EMAIL:</h3>";
+            echo "Checking for email: " . htmlspecialchars($email) . "\n";
             $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
             $stmt->execute([$email]);
             $existing_user = $stmt->fetch();
+            echo "Existing User Found (if any): ";
+            print_r($existing_user);
+            echo "</pre>";
+            // --- END DEBUGGING ---
 
             if ($existing_user) {
                 $error = 'Email sudah terdaftar. Silakan gunakan email lain.';
@@ -60,37 +80,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $location_id = null;
                 }
 
+                // --- DEBUGGING: Persiapan INSERT Query ---
+                echo "<pre><h3>DEBUGGING INSERT QUERY PREPARATION:</h3>";
+                echo "Hashed Password: " . htmlspecialchars($hashed_password) . "\n";
+                echo "Final Location ID for INSERT: " . ($location_id === null ? 'NULL' : htmlspecialchars($location_id)) . "\n";
+                echo "SQL Query: INSERT INTO users (name, email, password, role, location_id) VALUES (?, ?, ?, ?, ?)\n";
+                echo "Parameters to bind:\n";
+                echo "1: " . htmlspecialchars($name) . "\n";
+                echo "2: " . htmlspecialchars($email) . "\n";
+                echo "3: " . "******** (hashed password)\n";
+                echo "4: " . htmlspecialchars($user_type) . "\n";
+                echo "5: " . ($location_id === null ? 'NULL (PDO::PARAM_NULL)' : htmlspecialchars($location_id) . ' (PDO::PARAM_INT)') . "\n";
+                echo "</pre>";
+                // --- END DEBUGGING ---
+
                 $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, location_id) VALUES (?, ?, ?, ?, ?)");
+                
+                // Binding parameters
                 $stmt->bindParam(1, $name);
                 $stmt->bindParam(2, $email);
                 $stmt->bindParam(3, $hashed_password);
                 $stmt->bindParam(4, $user_type);
                 $stmt->bindValue(5, $location_id, is_null($location_id) ? PDO::PARAM_NULL : PDO::PARAM_INT);
-                $stmt->execute();
+                
+                // --- DEBUGGING: Eksekusi Query ---
+                echo "<pre><h3>DEBUGGING EXECUTION:</h3>";
+                $execute_success = $stmt->execute();
+                echo "Query executed: " . ($execute_success ? 'TRUE' : 'FALSE') . "\n";
+                echo "Rows affected: " . $stmt->rowCount() . "\n";
+                echo "Last Insert ID: " . $pdo->lastInsertId() . "\n";
+                echo "</pre>";
+                // --- END DEBUGGING ---
+
 
                 $user_id = $pdo->lastInsertId();
 
-                $_SESSION['user_id'] = $user_id;
-                $_SESSION['user_name'] = $name;
-                $_SESSION['user_email'] = $email;
-                $_SESSION['user_role'] = $user_type;
-                $_SESSION['user_location_id'] = $location_id;
+                if ($execute_success && $stmt->rowCount() > 0) { // Pastikan ada baris yang terpengaruh
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['user_name'] = $name;
+                    $_SESSION['user_email'] = $email;
+                    $_SESSION['user_role'] = $user_type;
+                    $_SESSION['user_location_id'] = $location_id;
 
-                if ($user_type === 'kader') {
-                    header('Location: kader-dashboard.php');
+                    // --- DEBUGGING: Redirect ---
+                    echo "<h3>Redirecting...</h3>";
+                    // --- END DEBUGGING ---
+
+                    if ($user_type === 'kader') {
+                        header('Location: kader-dashboard.php');
+                    } else {
+                        header('Location: index.php');
+                    }
+                    exit();
                 } else {
-                    header('Location: index.php');
+                    $error = 'Registrasi gagal. Tidak ada data yang tersimpan. Coba periksa log server.';
                 }
-                exit();
             }
         } catch (PDOException $e) {
-            $error = 'Terjadi kesalahan. Silakan coba lagi.';
-            error_log("Registration error: " . $e->getMessage());
+            $error = 'Terjadi kesalahan database: ' . $e->getMessage();
+            error_log("Registration DB error: " . $e->getMessage());
+            // --- DEBUGGING: Tampilkan pesan error PDO secara langsung ---
+            echo "<pre><h3>DATABASE ERROR CAUGHT!</h3>";
+            echo "Error message: " . $e->getMessage() . "\n";
+            echo "Error code: " . $e->getCode() . "\n";
+            echo "Trace: " . $e->getTraceAsString() . "\n";
+            echo "</pre>";
+            // --- END DEBUGGING ---
         }
     }
 }
 
-/* // Google simulation
+// Google simulation - HAPUS ATAU KOMENTARI INI DI PRODUKSI
 if (isset($_GET['google'])) {
     $user_type = $_GET['type'] ?? 'user';
     if ($user_type === 'kader') {
@@ -109,7 +169,7 @@ if (isset($_GET['google'])) {
         header('Location: index.php');
     }
     exit();
-} */
+}
 ?>
 
 <!DOCTYPE html>
@@ -139,7 +199,6 @@ if (isset($_GET['google'])) {
             <?php endif; ?>
             
             <form method="POST" class="space-y-4">
-                <!-- User Type Selection -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tipe Akun</label>
                     <div class="grid grid-cols-2 gap-4">
@@ -163,18 +222,17 @@ if (isset($_GET['google'])) {
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
                     <input type="text" id="name" name="name" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Masukkan nama lengkap">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Masukkan nama lengkap">
                 </div>
                 
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" id="email" name="email" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="nama@email.com">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="nama@email.com">
                 </div>
                 
-                <!-- Location selection for kader -->
                 <div id="locationField" class="hidden">
                     <label for="location_id" class="block text-sm font-medium text-gray-700 mb-1">Lokasi Posyandu</label>
                     <select id="location_id" name="location_id" 
@@ -189,15 +247,15 @@ if (isset($_GET['google'])) {
                 <div>
                     <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="password" name="password" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Minimal 6 karakter">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Minimal 6 karakter">
                 </div>
                 
                 <div>
                     <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
                     <input type="password" id="confirm_password" name="confirm_password" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           placeholder="Masukkan password yang sama">
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Masukkan password yang sama">
                 </div>
                 
                 <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
