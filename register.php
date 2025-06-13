@@ -150,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Google simulation - HAPUS ATAU KOMENTARI INI DI PRODUKSI
+/* // Google simulation - HAPUS ATAU KOMENTARI INI DI PRODUKSI
 if (isset($_GET['google'])) {
     $user_type = $_GET['type'] ?? 'user';
     if ($user_type === 'kader') {
@@ -169,7 +169,7 @@ if (isset($_GET['google'])) {
         header('Location: index.php');
     }
     exit();
-}
+} */
 ?>
 
 <!DOCTYPE html>
