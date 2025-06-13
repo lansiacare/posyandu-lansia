@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Get user data
 try {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, name, email FROM users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -21,6 +21,9 @@ try {
         header('Location: login.php');
         exit();
     }
+    // **Tambahan**: update session data kalau di DB berubah
+    $_SESSION['user_name'] = $user['name'];
+    $_SESSION['user_email'] = $user['email'];    
 } catch (PDOException $e) {
     error_log("Database error: " . $e->getMessage());
     $user = [
