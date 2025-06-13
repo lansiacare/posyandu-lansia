@@ -104,9 +104,7 @@ if ($is_logged_in && $user_role === 'kader') {
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold text-lg">LC</span>
-                    </div>
+                    <img src="gambar/logo.png" alt="Logo Lansia Care" class="w-12 h-12 rounded-lg object-cover" />                    
                     <div>
                         <h1 class="text-xl font-bold text-gray-900">Lansia Care</h1>
                         <p class="text-sm text-gray-600">Kecamatan Depok, Sleman, DIY</p>
